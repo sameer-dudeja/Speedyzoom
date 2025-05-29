@@ -1,0 +1,22 @@
+{
+  "name": "speedyzoom",
+  "version": "1.0.0",
+  "description": "Custom speed test tool to bypass ISP optimizations",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"bun run server:dev\" \"bun run client:dev\"",
+    "server:dev": "cd server && bun run dev",
+    "client:dev": "cd client && bun run dev",
+    "build": "cd client && bun run build",
+    "start": "cd server && bun start",
+    "install:all": "bun install && cd client && bun install && cd ../server && bun install",
+    "test": "bun test",
+    "clean": "rm -rf node_modules client/node_modules server/node_modules"
+  },
+  "keywords": ["speedtest", "network", "bandwidth", "isp"],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+} 

@@ -1,0 +1,23 @@
+{
+  "name": "speedyzoom-server",
+  "version": "1.0.0",
+  "description": "Speed test server backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "compression": "^1.7.4",
+    "helmet": "^7.0.0",
+    "morgan": "^1.10.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+} 

@@ -1,0 +1,112 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+bun.lockb
+
+# Environment variables and secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.staging
+
+# AWS credentials and config
+.aws/
+aws-config.json
+terraform.tfvars
+terraform.tfstate
+terraform.tfstate.backup
+
+# API keys and sensitive config
+config/secrets.json
+config/production.json
+config/aws.json
+secrets/
+keys/
+certificates/
+
+# Build outputs
+build/
+dist/
+out/
+.next/
+client/build/
+server/dist/
+
+# Runtime and cache
+.cache/
+.temp/
+.tmp/
+*.log
+logs/
+coverage/
+.nyc_output/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS generated files
+*.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Development and testing
+.eslintcache
+.jest/
+test-results/
+playwright-report/
+test-results/
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars.json
+
+# CDK
+cdk.out/
+cdk.context.json
+
+# Monitoring and metrics
+monitoring/grafana/data/
+monitoring/prometheus/data/
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Local development
+local-config.js
+dev-notes.md
+TODO.md
+
+# Performance and profiling
+*.cpuprofile
+*.heapprofile
+.clinic/
+
+# Deployment artifacts
+deployment/
+infrastructure/generated/
+scripts/deploy-*.sh
