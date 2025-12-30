@@ -111,14 +111,15 @@ function Results({ results: propResults }) {
 
     // Calculate averages and format for chart
     // Sort by ISO date string for reliable ordering
+    // Keep numeric values for Recharts (formatting done in tooltip/display)
     return Object.values(grouped).map(group => ({
       date: group.dateDisplay, // Display locale-formatted date
       dateKey: group.dateKey, // Keep sortable key
       download: group.download.length > 0 
-        ? (group.download.reduce((a, b) => a + b, 0) / group.download.length).toFixed(1)
+        ? group.download.reduce((a, b) => a + b, 0) / group.download.length
         : null,
       upload: group.upload.length > 0
-        ? (group.upload.reduce((a, b) => a + b, 0) / group.upload.length).toFixed(1)
+        ? group.upload.reduce((a, b) => a + b, 0) / group.upload.length
         : null,
       latency: group.latency.length > 0
         ? Math.round(group.latency.reduce((a, b) => a + b, 0) / group.latency.length)
@@ -147,17 +148,23 @@ function Results({ results: propResults }) {
     const latencies = filteredResults.filter(r => r.metrics?.latency).map(r => r.metrics.latency);
 
     // Calculate trends (compare first half vs second half)
-    const sortedByDate = [...filteredResults].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-    const midPoint = Math.floor(sortedByDate.length / 2);
-    const firstHalf = sortedByDate.slice(0, midPoint);
-    const secondHalf = sortedByDate.slice(midPoint);
-    
-    const firstHalfAvg = firstHalf.reduce((sum, r) => sum + parseFloat(r.speed || 0), 0) / firstHalf.length;
-    const secondHalfAvg = secondHalf.reduce((sum, r) => sum + parseFloat(r.speed || 0), 0) / secondHalf.length;
-    
+    // Only calculate trend if we have enough data points (at least 2 results)
     let trend = 'neutral';
-    if (secondHalfAvg > firstHalfAvg * 1.1) trend = 'improving';
-    else if (secondHalfAvg < firstHalfAvg * 0.9) trend = 'declining';
+    if (filteredResults.length >= 2) {
+      const sortedByDate = [...filteredResults].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      const midPoint = Math.floor(sortedByDate.length / 2);
+      const firstHalf = sortedByDate.slice(0, midPoint);
+      const secondHalf = sortedByDate.slice(midPoint);
+      
+      // Only calculate trend if both halves have data
+      if (firstHalf.length > 0 && secondHalf.length > 0) {
+        const firstHalfAvg = firstHalf.reduce((sum, r) => sum + parseFloat(r.speed || 0), 0) / firstHalf.length;
+        const secondHalfAvg = secondHalf.reduce((sum, r) => sum + parseFloat(r.speed || 0), 0) / secondHalf.length;
+        
+        if (secondHalfAvg > firstHalfAvg * 1.1) trend = 'improving';
+        else if (secondHalfAvg < firstHalfAvg * 0.9) trend = 'declining';
+      }
+    }
 
     return {
       totalTests: filteredResults.length,
