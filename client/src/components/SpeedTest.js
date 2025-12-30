@@ -189,6 +189,8 @@ function SpeedTest({ selectedServer, onTestComplete }) {
 			// Track progress updates for better visualization
 			let lastProgressUpdate = 0;
 			const progressUpdateInterval = 50; // Update every 50ms (more frequent)
+			let uploadCompleteTime = null;
+			let finalUploadSpeed = 0;
 
 			const response = await axios.post(`${selectedServer.url}/upload`, testData, {
 				headers: {
@@ -216,18 +218,43 @@ function SpeedTest({ selectedServer, onTestComplete }) {
 							};
 							return [...prev, newPoint];
 						});
+
+						// Track when upload actually completes
+						if (loaded === total) {
+							uploadCompleteTime = now;
+							finalUploadSpeed = Math.min(speedMbps, 1000);
+						}
 					}
 				}
 			});
 
 			// Calculate upload test duration and speed
-			const totalTime = Math.max((Date.now() - testStartTime.current), 1); // At least 1ms
-			const uploadSpeed = (testData.byteLength * 8) / ((totalTime / 1000) * 1000000); // Mbps
+			const actualUploadTime = uploadCompleteTime ? (uploadCompleteTime - testStartTime.current) : Math.max((Date.now() - testStartTime.current), 1);
+			const uploadSpeed = (testData.byteLength * 8) / ((actualUploadTime / 1000) * 1000000); // Mbps
 
 			// Ensure minimum test duration for UI visibility and accuracy
 			const minTestDuration = 2000; // 2 seconds minimum
-			if (totalTime < minTestDuration) {
-				await new Promise(resolve => setTimeout(resolve, minTestDuration - totalTime));
+			const remainingTime = minTestDuration - actualUploadTime;
+			
+			if (remainingTime > 0) {
+				// Continue showing the final speed during the remaining time
+				// Add data points to maintain graph continuity
+				const updateInterval = 100; // Update every 100ms during wait
+				const updatesNeeded = Math.ceil(remainingTime / updateInterval);
+				
+				for (let i = 1; i <= updatesNeeded; i++) {
+					await new Promise(resolve => setTimeout(resolve, updateInterval));
+					const elapsed = (Date.now() - testStartTime.current) / 1000;
+					
+					// Add data point showing maintained speed
+					setUploadGraphData(prev => {
+						const newPoint = {
+							time: parseFloat(elapsed.toFixed(1)),
+							speed: finalUploadSpeed || Math.min(uploadSpeed, 1000)
+						};
+						return [...prev, newPoint];
+					});
+				}
 			}
 
 			// Recalculate with actual duration used
@@ -282,11 +309,12 @@ function SpeedTest({ selectedServer, onTestComplete }) {
 			server: selectedServer,
 			timestamp: new Date().toISOString(),
 			metrics: { ...metrics },
-			duration: result.duration
+			duration: result.duration,
+			userInfo: { ...userInfo } // Include user info for historical tracking
 		};
 
 		onTestComplete(testResult);
-	}, [selectedServer, metrics, onTestComplete]);
+	}, [selectedServer, metrics, onTestComplete, userInfo]);
 
 	const resetTest = useCallback(() => {
 		setIsTestRunning(false);
@@ -559,7 +587,7 @@ function SpeedTest({ selectedServer, onTestComplete }) {
 									axisLine={false}
 									tickLine={false}
 									tick={{ fill: '#94a3b8', fontSize: 10 }}
-									domain={[0, 'dataMax']}
+									domain={([dataMin, dataMax]) => [0, Math.max(dataMax || 0, 2)]}
 									type="number"
 									allowDataOverflow={false}
 									tickCount={8}
@@ -570,7 +598,7 @@ function SpeedTest({ selectedServer, onTestComplete }) {
 									axisLine={false}
 									tickLine={false}
 									tick={{ fill: '#94a3b8', fontSize: 10 }}
-									domain={[0, 'dataMax']}
+									domain={([dataMin, dataMax]) => [0, Math.max(dataMax || 0, 10)]}
 									allowDataOverflow={false}
 									tickFormatter={(value) => `${Math.round(value)} ${speedUnit}`}
 									label={{ 

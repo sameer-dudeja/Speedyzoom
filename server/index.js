@@ -21,9 +21,19 @@ const PORT = process.env.PORT || 3001;
 const SERVER_REGION = process.env.AWS_REGION || 'local';
 
 // Middleware
-app.use(helmet());
 app.use(morgan('combined'));
-app.use(cors());
+// CORS must be before helmet to avoid conflicts
+app.use(cors({
+	origin: true, // Allow all origins (or specify your client origin)
+	methods: ['GET', 'POST', 'OPTIONS'],
+	allowedHeaders: ['Content-Type', 'Authorization'],
+	credentials: true
+}));
+app.use(helmet({
+	// Allow CORS headers
+	crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+// Only parse JSON for non-binary endpoints
 app.use(express.json());
 
 // Health check endpoint

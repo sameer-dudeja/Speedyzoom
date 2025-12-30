@@ -5,12 +5,19 @@ import ServerSelector from './components/ServerSelector';
 import Results from './components/Results';
 import Comparison from './components/Comparison';
 import Footer from './components/Footer';
+import { getStoredResults, saveTestResult } from './utils/storage';
 
 function App() {
   const [activeTab, setActiveTab] = useState('test');
   const [testResults, setTestResults] = useState([]);
   const [selectedServer, setSelectedServer] = useState(null);
   const [availableServers, setAvailableServers] = useState([]);
+
+  // Load stored results from localStorage on mount
+  useEffect(() => {
+    const storedResults = getStoredResults();
+    setTestResults(storedResults);
+  }, []);
 
   useEffect(() => {
     // Load available servers (this will be populated from your AWS regions)
@@ -27,7 +34,12 @@ function App() {
   }, []);
 
   const handleTestComplete = (result) => {
-    setTestResults(prev => [result, ...prev].slice(0, 10)); // Keep last 10 results
+    // Save to localStorage
+    saveTestResult(result);
+    
+    // Update state (load from storage to ensure consistency)
+    const storedResults = getStoredResults();
+    setTestResults(storedResults);
   };
 
   const renderContent = () => {

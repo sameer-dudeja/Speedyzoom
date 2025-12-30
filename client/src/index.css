@@ -70,6 +70,54 @@
   .cyber-glow {
     box-shadow: 0 0 20px rgba(0, 212, 255, 0.6), 0 0 40px rgba(0, 136, 255, 0.3);
   }
+
+  /* Styled select dropdowns */
+  select {
+    @apply bg-secondary-900 bg-opacity-60 border border-primary-400 border-opacity-30 rounded-lg px-4 py-2 text-white;
+    color: white !important;
+    background-color: rgba(15, 23, 42, 0.8) !important;
+    cursor: pointer;
+  }
+
+  select:hover {
+    border-color: rgba(0, 136, 255, 0.5);
+    box-shadow: 0 0 8px rgba(0, 136, 255, 0.2);
+  }
+
+  select:focus {
+    @apply outline-none border-primary-400 border-opacity-60;
+    box-shadow: 0 0 10px rgba(0, 136, 255, 0.4);
+    border-color: rgba(0, 136, 255, 0.6);
+  }
+
+  /* Style options - note: limited browser support */
+  select option {
+    background-color: #0f172a !important;
+    color: white !important;
+    padding: 10px 12px;
+    border: none;
+  }
+
+  /* For browsers that support option styling */
+  select option:hover,
+  select option:checked,
+  select option:focus {
+    background-color: rgba(0, 136, 255, 0.3) !important;
+    color: #00d4ff !important;
+  }
+
+  /* Custom dropdown arrow styling */
+  select::-ms-expand {
+    display: none; /* Hide default arrow in IE/Edge */
+  }
+
+  /* Firefox specific styling */
+  @-moz-document url-prefix() {
+    select {
+      text-indent: 0.01px;
+      text-overflow: '';
+    }
+  }
 }
 
 @layer utilities {
