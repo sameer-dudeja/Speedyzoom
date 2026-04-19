@@ -1,0 +1,17 @@
+# Copy to terraform.tfvars (gitignored), then uncomment and edit the line below.
+# PowerShell public IPv4:
+#   (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content.Trim()
+#
+# Use that value with /32 (one host), e.g. if the command prints 198.51.100.7 then:
+#
+# ssh_ingress_cidrs = ["198.51.100.7/32"]
+#
+# Do not use placeholder text like YOUR.PUBLIC.IP — AWS validates CIDRs and plan will fail.
+
+# Optional: only if you need inbound HTTP on 80
+# http_ingress_cidrs = ["198.51.100.7/32"]
+
+# Optional: tighten app port to your IP only (omit from tfvars to keep default 0.0.0.0/0 for public tests)
+# app_ingress_cidrs = ["198.51.100.7/32"]
+
+# ec2_key_name = "your-us-east-1-key-pair-name"

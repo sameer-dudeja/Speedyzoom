@@ -146,65 +146,67 @@ function Comparison() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-white mb-4">🔍 ISP Optimization Analysis</h2>
-        <p className="text-white text-opacity-80 mb-6">
+        <h2 className="text-4xl font-bold text-white mb-5 flex items-center justify-center gap-3">
+          <span className="text-3xl">🔍</span> ISP Optimization Analysis
+        </h2>
+        <p className="text-white text-opacity-80 text-lg">
           Compare SpeedyZoom results with popular speed test sites to detect ISP optimizations
         </p>
       </div>
 
       {/* Input Form */}
-      <div className="glass-card p-6">
-        <h3 className="text-xl font-semibold text-white mb-4">Enter Your Speed Test Results</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="glass-card p-8">
+        <h3 className="text-2xl font-semibold text-white mb-6">Enter Your Speed Test Results</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-white text-opacity-80 text-sm mb-2">
+            <label className="block text-white text-opacity-80 text-base mb-3 font-medium">
               SpeedyZoom Result (Mbps) *
             </label>
             <input
               type="number"
               placeholder="e.g., 150.5"
-              className="w-full bg-white bg-opacity-10 border border-white border-opacity-30 rounded-lg px-4 py-2 text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:border-primary-400"
+              className="w-full bg-white bg-opacity-10 border border-white border-opacity-30 rounded-lg px-5 py-3 text-white text-base placeholder-white placeholder-opacity-50 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-400 focus:ring-opacity-50 transition-all"
               value={comparisonData.speedyZoom}
               onChange={(e) => handleInputChange('speedyZoom', e.target.value)}
             />
           </div>
           
           <div>
-            <label className="block text-white text-opacity-80 text-sm mb-2">
+            <label className="block text-white text-opacity-80 text-base mb-3 font-medium">
               Ookla Speedtest.net (Mbps)
             </label>
             <input
               type="number"
               placeholder="e.g., 300.0"
-              className="w-full bg-white bg-opacity-10 border border-white border-opacity-30 rounded-lg px-4 py-2 text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:border-primary-400"
+              className="w-full bg-white bg-opacity-10 border border-white border-opacity-30 rounded-lg px-5 py-3 text-white text-base placeholder-white placeholder-opacity-50 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-400 focus:ring-opacity-50 transition-all"
               value={comparisonData.ookla}
               onChange={(e) => handleInputChange('ookla', e.target.value)}
             />
           </div>
 
           <div>
-            <label className="block text-white text-opacity-80 text-sm mb-2">
+            <label className="block text-white text-opacity-80 text-base mb-3 font-medium">
               Fast.com (Netflix) (Mbps)
             </label>
             <input
               type="number"
               placeholder="e.g., 280.0"
-              className="w-full bg-white bg-opacity-10 border border-white border-opacity-30 rounded-lg px-4 py-2 text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:border-primary-400"
+              className="w-full bg-white bg-opacity-10 border border-white border-opacity-30 rounded-lg px-5 py-3 text-white text-base placeholder-white placeholder-opacity-50 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-400 focus:ring-opacity-50 transition-all"
               value={comparisonData.fastCom}
               onChange={(e) => handleInputChange('fastCom', e.target.value)}
             />
           </div>
 
           <div>
-            <label className="block text-white text-opacity-80 text-sm mb-2">
+            <label className="block text-white text-opacity-80 text-base mb-3 font-medium">
               Google Speed Test (Mbps)
             </label>
             <input
               type="number"
               placeholder="e.g., 290.0"
-              className="w-full bg-white bg-opacity-10 border border-white border-opacity-30 rounded-lg px-4 py-2 text-white placeholder-white placeholder-opacity-50 focus:outline-none focus:border-primary-400"
+              className="w-full bg-white bg-opacity-10 border border-white border-opacity-30 rounded-lg px-5 py-3 text-white text-base placeholder-white placeholder-opacity-50 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-400 focus:ring-opacity-50 transition-all"
               value={comparisonData.googleSpeed}
               onChange={(e) => handleInputChange('googleSpeed', e.target.value)}
             />
@@ -213,7 +215,7 @@ function Comparison() {
 
         <button
           onClick={analyzeResults}
-          className="w-full mt-6 gradient-button py-3 rounded-lg text-white font-semibold transition-all duration-300 hover:shadow-lg"
+          className="w-full mt-8 gradient-button py-4 rounded-xl text-white text-lg font-bold transition-all duration-300 hover:shadow-2xl hover:scale-105"
         >
           🔍 Analyze ISP Optimization
         </button>
@@ -221,47 +223,47 @@ function Comparison() {
 
       {/* Analysis Results */}
       {analysisResult && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Overall Assessment */}
-          <div className="glass-card p-6">
+          <div className="glass-card p-10 transform hover:scale-105 transition-transform duration-300">
             <div className="text-center">
-              <div className="text-4xl mb-3">
+              <div className="text-6xl mb-5">
                 {getAssessmentMessage(analysisResult.overallAssessment).icon}
               </div>
-              <h3 className={`text-2xl font-bold mb-3 ${getAssessmentMessage(analysisResult.overallAssessment).color}`}>
+              <h3 className={`text-3xl font-bold mb-4 ${getAssessmentMessage(analysisResult.overallAssessment).color}`}>
                 {getAssessmentMessage(analysisResult.overallAssessment).title}
               </h3>
-              <p className="text-white text-opacity-80">
+              <p className="text-white text-opacity-80 text-lg">
                 {getAssessmentMessage(analysisResult.overallAssessment).message}
               </p>
             </div>
           </div>
 
           {/* Detailed Comparisons */}
-          <div className="glass-card p-6">
-            <h3 className="text-xl font-semibold text-white mb-4">Detailed Analysis</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-white bg-opacity-5 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">⚡</span>
-                  <span className="text-white font-medium">SpeedyZoom (Baseline)</span>
+          <div className="glass-card p-8">
+            <h3 className="text-2xl font-semibold text-white mb-6">Detailed Analysis</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-5 bg-white bg-opacity-5 rounded-xl transform hover:scale-105 transition-transform">
+                <div className="flex items-center gap-4">
+                  <span className="text-2xl">⚡</span>
+                  <span className="text-white font-semibold text-lg">SpeedyZoom (Baseline)</span>
                 </div>
-                <div className="text-white font-bold">
+                <div className="text-white font-bold text-xl">
                   {analysisResult.speedyZoomSpeed.toFixed(1)} Mbps
                 </div>
               </div>
 
               {analysisResult.comparisons.map((comp, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-white bg-opacity-5 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <span className="text-lg">{getStatusIcon(comp.status)}</span>
-                    <span className="text-white font-medium">{comp.service}</span>
+                <div key={index} className="flex items-center justify-between p-5 bg-white bg-opacity-5 rounded-xl transform hover:scale-105 transition-transform">
+                  <div className="flex items-center gap-4">
+                    <span className="text-2xl">{getStatusIcon(comp.status)}</span>
+                    <span className="text-white font-semibold text-lg">{comp.service}</span>
                   </div>
                   <div className="text-right">
-                    <div className="text-white font-bold">
+                    <div className="text-white font-bold text-xl">
                       {comp.speed.toFixed(1)} Mbps
                     </div>
-                    <div className={`text-sm ${getStatusColor(comp.status)}`}>
+                    <div className={`text-base font-medium ${getStatusColor(comp.status)}`}>
                       {comp.difference > 0 ? '+' : ''}{comp.difference.toFixed(1)}%
                     </div>
                   </div>
@@ -271,31 +273,33 @@ function Comparison() {
           </div>
 
           {/* Recommendations */}
-          <div className="glass-card p-6">
-            <h3 className="text-xl font-semibold text-white mb-4">💡 What This Means</h3>
-            <div className="space-y-3 text-white text-opacity-80">
-              <div className="flex items-start gap-3">
-                <span className="text-green-400 mt-1">✓</span>
+          <div className="glass-card p-8">
+            <h3 className="text-2xl font-semibold text-white mb-6 flex items-center gap-3">
+              <span className="text-xl">💡</span> What This Means
+            </h3>
+            <div className="space-y-4 text-white text-opacity-80 text-base">
+              <div className="flex items-start gap-4 p-4 bg-white bg-opacity-5 rounded-lg">
+                <span className="text-green-400 mt-1 text-xl">✓</span>
                 <div>
-                  <strong>Normal (0-5% difference):</strong> Your ISP treats all traffic equally - ideal situation.
+                  <strong className="text-white">Normal (0-5% difference):</strong> Your ISP treats all traffic equally - ideal situation.
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <span className="text-yellow-400 mt-1">⚠</span>
+              <div className="flex items-start gap-4 p-4 bg-white bg-opacity-5 rounded-lg">
+                <span className="text-yellow-400 mt-1 text-xl">⚠</span>
                 <div>
-                  <strong>Suspicious (5-20% difference):</strong> Possible mild optimization of speed test sites.
+                  <strong className="text-white">Suspicious (5-20% difference):</strong> Possible mild optimization of speed test sites.
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <span className="text-orange-400 mt-1">🔶</span>
+              <div className="flex items-start gap-4 p-4 bg-white bg-opacity-5 rounded-lg">
+                <span className="text-orange-400 mt-1 text-xl">🔶</span>
                 <div>
-                  <strong>Likely Optimization (20-50% difference):</strong> Speed test sites probably get preferential routing.
+                  <strong className="text-white">Likely Optimization (20-50% difference):</strong> Speed test sites probably get preferential routing.
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <span className="text-red-400 mt-1">🚨</span>
+              <div className="flex items-start gap-4 p-4 bg-white bg-opacity-5 rounded-lg">
+                <span className="text-red-400 mt-1 text-xl">🚨</span>
                 <div>
-                  <strong>Definite Optimization (50%+ difference):</strong> Significant difference between speed tests and real performance.
+                  <strong className="text-white">Definite Optimization (50%+ difference):</strong> Significant difference between speed tests and real performance.
                 </div>
               </div>
             </div>
@@ -304,24 +308,26 @@ function Comparison() {
       )}
 
       {/* Instructions */}
-      <div className="glass-card p-6">
-        <h3 className="text-xl font-semibold text-white mb-4">📋 How to Use This Tool</h3>
-        <div className="space-y-3 text-white text-opacity-80">
-          <div className="flex items-start gap-3">
-            <span className="text-primary-400 font-bold">1.</span>
-            <div>Run a speed test with SpeedyZoom using our custom methodology</div>
+      <div className="glass-card p-8">
+        <h3 className="text-2xl font-semibold text-white mb-6 flex items-center gap-3">
+          <span className="text-xl">📋</span> How to Use This Tool
+        </h3>
+        <div className="space-y-4 text-white text-opacity-80 text-base">
+          <div className="flex items-start gap-4 p-4 bg-white bg-opacity-5 rounded-lg">
+            <span className="text-primary-400 font-bold text-xl">1.</span>
+            <div className="leading-relaxed">Run a speed test with SpeedyZoom using our custom methodology</div>
           </div>
-          <div className="flex items-start gap-3">
-            <span className="text-primary-400 font-bold">2.</span>
-            <div>Visit popular speed test sites (Ookla, Fast.com, Google) and record their results</div>
+          <div className="flex items-start gap-4 p-4 bg-white bg-opacity-5 rounded-lg">
+            <span className="text-primary-400 font-bold text-xl">2.</span>
+            <div className="leading-relaxed">Visit popular speed test sites (Ookla, Fast.com, Google) and record their results</div>
           </div>
-          <div className="flex items-start gap-3">
-            <span className="text-primary-400 font-bold">3.</span>
-            <div>Enter all results above and click "Analyze" to detect ISP optimizations</div>
+          <div className="flex items-start gap-4 p-4 bg-white bg-opacity-5 rounded-lg">
+            <span className="text-primary-400 font-bold text-xl">3.</span>
+            <div className="leading-relaxed">Enter all results above and click "Analyze" to detect ISP optimizations</div>
           </div>
-          <div className="flex items-start gap-3">
-            <span className="text-primary-400 font-bold">4.</span>
-            <div>Compare the results - large differences may indicate ISP traffic shaping</div>
+          <div className="flex items-start gap-4 p-4 bg-white bg-opacity-5 rounded-lg">
+            <span className="text-primary-400 font-bold text-xl">4.</span>
+            <div className="leading-relaxed">Compare the results - large differences may indicate ISP traffic shaping</div>
           </div>
         </div>
       </div>

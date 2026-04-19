@@ -110,3 +110,7 @@ TODO.md
 deployment/
 infrastructure/generated/
 scripts/deploy-*.sh
+
+client/.env.development
+terraform/tfplan
+terraform/*.tfplan

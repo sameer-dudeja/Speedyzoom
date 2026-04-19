@@ -17,8 +17,11 @@ const io = socketIo(server, {
 	}
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
+// Bind all interfaces so the process accepts traffic on EC2 / containers (override with HOST if needed).
+const HOST = process.env.HOST || '0.0.0.0';
 const SERVER_REGION = process.env.AWS_REGION || 'local';
+const MAX_DOWNLOAD_SIZE_MB = 250;
 
 // Middleware
 app.use(morgan('combined'));
@@ -61,80 +64,139 @@ function generateRandomData(sizeInMB) {
 	return chunks.join('');
 }
 
-// Download test endpoint - streaming random data
+// Enhanced download test endpoint with better performance
 app.get('/download/:sizeMB', (req, res) => {
 	const sizeMB = parseInt(req.params.sizeMB) || 1;
-	const maxSize = 100; // Limit to 100MB per request
-	const actualSize = Math.min(sizeMB, maxSize);
+	const actualSize = Math.min(sizeMB, MAX_DOWNLOAD_SIZE_MB);
 
-	console.log(`Download test requested: ${actualSize}MB from ${req.ip}`);
+	console.log(`📥 Download test: ${actualSize}MB from ${req.ip} (${req.get('User-Agent')?.split(' ')[0] || 'Unknown'})`);
 
+	// Enhanced headers for better speed testing
 	res.setHeader('Content-Type', 'application/octet-stream');
-	res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+	res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, private');
 	res.setHeader('Pragma', 'no-cache');
 	res.setHeader('Expires', '0');
-	res.setHeader('X-Test-Size', actualSize);
+	res.setHeader('Content-Length', actualSize * 1024 * 1024);
+	res.setHeader('X-Test-Size-MB', actualSize);
 	res.setHeader('X-Server-Region', SERVER_REGION);
+	res.setHeader('X-Test-Type', 'speed-download');
+	res.setHeader('Access-Control-Expose-Headers', 'X-Test-Size-MB,X-Server-Region,X-Test-Type');
 
-	const startTime = Date.now();
+	const startTime = process.hrtime.bigint();
 	let bytesSent = 0;
 	const targetBytes = actualSize * 1024 * 1024;
-	const chunkSize = 8192; // 8KB chunks
+	
+	// Adaptive chunk sizing for better accuracy
+	let chunkSize = 16384; // Start with 16KB
+	if (actualSize >= 25) chunkSize = 65536; // 64KB for larger tests
+	if (actualSize >= 100) chunkSize = 131072; // 128KB for very large tests
+
+	// Pre-generate random data pools to reduce CPU overhead during test
+	const randomPools = [];
+	for (let i = 0; i < 16; i++) {
+		randomPools.push(crypto.randomBytes(chunkSize));
+	}
+	let poolIndex = 0;
 
 	const sendChunk = () => {
 		if (bytesSent >= targetBytes) {
+			const endTime = process.hrtime.bigint();
+			const duration = Number(endTime - startTime) / 1000000; // Convert to milliseconds
+			console.log(`✅ Download complete: ${actualSize}MB in ${duration.toFixed(1)}ms (${((actualSize * 8 * 1000) / duration).toFixed(2)} Mbps) to ${req.ip}`);
 			res.end();
-			const duration = Date.now() - startTime;
-			console.log(`Download completed: ${actualSize}MB in ${duration}ms to ${req.ip}`);
 			return;
 		}
 
 		const remainingBytes = targetBytes - bytesSent;
 		const currentChunkSize = Math.min(chunkSize, remainingBytes);
-
-		// Generate random data to prevent compression
-		const randomData = crypto.randomBytes(currentChunkSize);
+		
+		// Use pre-generated random data (rotate through pools)
+		const randomData = randomPools[poolIndex % randomPools.length].slice(0, currentChunkSize);
+		poolIndex++;
+		
 		res.write(randomData);
 		bytesSent += currentChunkSize;
 
-		// Use setImmediate to prevent blocking
+		// Always schedule next chunk - the check at the top will handle completion
 		setImmediate(sendChunk);
 	};
+
+	// Handle client disconnect
+	req.on('close', () => {
+		console.log(`🚫 Download cancelled: ${actualSize}MB test from ${req.ip} after ${bytesSent} bytes`);
+	});
 
 	sendChunk();
 });
 
-// Upload test endpoint
+// Enhanced upload test endpoint
 app.post('/upload', (req, res) => {
 	let bytesReceived = 0;
-	const startTime = Date.now();
+	const startTime = process.hrtime.bigint();
+	let firstByteTime = null;
+	let lastProgressTime = startTime;
+	const speedSamples = [];
 
-	console.log(`Upload test started from ${req.ip}`);
+	console.log(`📤 Upload test started from ${req.ip}`);
 
 	req.on('data', chunk => {
+		const now = process.hrtime.bigint();
+		if (!firstByteTime) firstByteTime = now;
+		
 		bytesReceived += chunk.length;
+
+		// Calculate instantaneous speed every 100ms
+		const timeSinceLastSample = Number(now - lastProgressTime) / 1000000;
+		if (timeSinceLastSample > 100) { // 100ms sampling
+			const elapsed = Number(now - firstByteTime) / 1000000000; // seconds
+			if (elapsed > 0.1) { // Start measuring after 100ms
+				const currentSpeed = (bytesReceived * 8) / (elapsed * 1000000); // Mbps
+				speedSamples.push(currentSpeed);
+			}
+			lastProgressTime = now;
+		}
 	});
 
 	req.on('end', () => {
-		const duration = Date.now() - startTime;
-		// Prevent division by zero and unrealistic speeds
-		const durationSeconds = Math.max(duration / 1000, 0.001);
-		const speedMbps = (bytesReceived * 8) / (durationSeconds * 1000000); // Convert to Mbps properly
+		const endTime = process.hrtime.bigint();
+		const totalDuration = Number(endTime - startTime) / 1000000; // milliseconds
+		const dataDuration = firstByteTime ? Number(endTime - firstByteTime) / 1000000 : totalDuration;
+		
+		// Calculate average speed (exclude first 10% and last 10% of samples for stability)
+		let avgSpeed;
+		if (speedSamples.length > 4) {
+			const trimCount = Math.floor(speedSamples.length * 0.1);
+			const trimmedSamples = speedSamples.slice(trimCount, -trimCount || undefined);
+			avgSpeed = trimmedSamples.reduce((a, b) => a + b, 0) / trimmedSamples.length;
+		} else {
+			// Fallback calculation for short uploads
+			const durationSeconds = Math.max(dataDuration / 1000, 0.001);
+			avgSpeed = (bytesReceived * 8) / (durationSeconds * 1000000);
+		}
 
-		console.log(`Upload completed: ${(bytesReceived / (1024 * 1024)).toFixed(2)}MB in ${duration}ms (${speedMbps.toFixed(2)} Mbps) from ${req.ip}`);
+		const peakSpeed = speedSamples.length > 0 ? Math.max(...speedSamples) : avgSpeed;
+
+		console.log(`✅ Upload complete: ${(bytesReceived / (1024 * 1024)).toFixed(2)}MB in ${dataDuration.toFixed(1)}ms (avg: ${avgSpeed.toFixed(2)} Mbps, peak: ${peakSpeed.toFixed(2)} Mbps) from ${req.ip}`);
 
 		res.json({
 			bytesReceived,
-			duration,
-			speedMbps: Math.min(speedMbps.toFixed(2), 1000), // Cap at 1Gbps for sanity
+			duration: Math.round(dataDuration),
+			speedMbps: Math.min(avgSpeed.toFixed(2), 2000), 
+			peakSpeedMbps: Math.min(peakSpeed.toFixed(2), 2000),
+			samples: speedSamples.length,
 			region: SERVER_REGION,
-			timestamp: new Date().toISOString()
+			timestamp: new Date().toISOString(),
+			testType: 'enhanced-upload'
 		});
 	});
 
 	req.on('error', (err) => {
 		console.error('Upload error:', err);
-		res.status(500).json({ error: 'Upload test failed' });
+		res.status(500).json({ error: 'Upload test failed', region: SERVER_REGION });
+	});
+
+	req.on('close', () => {
+		console.log(`🚫 Upload cancelled from ${req.ip} after ${bytesReceived} bytes`);
 	});
 });
 
@@ -299,7 +361,7 @@ app.get('/info', (req, res) => {
 			'Multi-connection Tests'
 		],
 		limits: {
-			maxDownloadSizeMB: 100,
+			maxDownloadSizeMB: MAX_DOWNLOAD_SIZE_MB,
 			maxUploadSizeMB: 100,
 			maxWebSocketSizeMB: 50,
 			maxConnections: 8
@@ -308,8 +370,8 @@ app.get('/info', (req, res) => {
 	});
 });
 
-server.listen(PORT, () => {
-	console.log(`🚀 SpeedyZoom server running on port ${PORT}`);
+server.listen(PORT, HOST, () => {
+	console.log(`🚀 SpeedyZoom server listening on http://${HOST}:${PORT}`);
 	console.log(`📍 Region: ${SERVER_REGION}`);
 	console.log(`🌐 Ready for speed tests!`);
 }); 

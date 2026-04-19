@@ -1,7 +1,7 @@
 {
   "name": "speedyzoom",
   "version": "1.0.0",
-  "description": "Custom speed test tool to bypass ISP optimizations",
+  "description": "Custom speed test tool to bypass ISP optimizations. Local dev: UI :3001, API :3002.",
   "main": "server/index.js",
   "scripts": {
     "dev": "concurrently \"bun run server:dev\" \"bun run client:dev\"",

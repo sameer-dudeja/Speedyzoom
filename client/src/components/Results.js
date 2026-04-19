@@ -262,16 +262,18 @@ function Results({ results: propResults }) {
 
   if (!allResults || allResults.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">📊</div>
-        <h2 className="text-3xl font-bold text-white mb-4">No Test Results Yet</h2>
-        <p className="text-white text-opacity-80 mb-6">
+      <div className="text-center py-20">
+        <div className="w-24 h-24 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full flex items-center justify-center mx-auto mb-6 cyber-glow">
+          <span className="text-5xl">📊</span>
+        </div>
+        <h2 className="text-4xl font-bold text-white mb-5">No Test Results Yet</h2>
+        <p className="text-white text-opacity-80 mb-10 text-lg">
           Run some speed tests to see your results here
         </p>
-        <div className="glass-card p-6 max-w-md mx-auto">
-          <p className="text-white text-sm">
+        <div className="glass-card p-8 max-w-2xl mx-auto">
+          <p className="text-white text-base leading-relaxed">
             Your test history will be automatically saved and displayed here,
-            helping you track speed trends and identify ISP optimizations.
+            helping you track speed trends and identify ISP optimizations over time.
           </p>
         </div>
       </div>
@@ -279,26 +281,28 @@ function Results({ results: propResults }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-white mb-4">📊 Test Results & History</h2>
-        <p className="text-white text-opacity-80 mb-6">
+        <h2 className="text-4xl font-bold text-white mb-5 flex items-center justify-center gap-3">
+          <span className="text-3xl">📊</span> Test Results & History
+        </h2>
+        <p className="text-white text-opacity-80 text-lg">
           Your speed test history and performance analytics
         </p>
       </div>
 
       {/* Storage Stats */}
-      <div className="glass-card p-4">
-        <div className="flex justify-between items-center text-sm">
-          <div className="text-white text-opacity-80">
-            <span className="font-medium">{storageStats.totalTests}</span> tests stored
+      <div className="glass-card p-6">
+        <div className="flex justify-between items-center">
+          <div className="text-white text-opacity-80 text-base">
+            <span className="font-semibold text-white">{storageStats.totalTests}</span> tests stored
             {storageStats.storageSize > 0 && (
-              <span className="ml-4">({storageStats.storageSize} KB)</span>
+              <span className="ml-4 text-sm">({storageStats.storageSize} KB used)</span>
             )}
           </div>
           <button
             onClick={handleClearAll}
-            className="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-medium transition-all duration-300"
+            className="px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-semibold transition-all duration-300 hover:shadow-lg"
           >
             Clear All Data
           </button>
@@ -306,15 +310,15 @@ function Results({ results: propResults }) {
       </div>
 
       {/* Filters */}
-      <div className="glass-card p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="glass-card p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Type Filter */}
           <div>
-            <label className="block text-white text-opacity-80 text-sm mb-2">Test Type</label>
+            <label className="block text-white text-opacity-80 text-sm mb-3 font-medium">Test Type</label>
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="w-full bg-secondary-900 bg-opacity-60 border border-primary-400 border-opacity-30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-400 focus:ring-opacity-50 transition-all duration-300"
+              className="w-full bg-secondary-900 bg-opacity-60 border border-primary-400 border-opacity-30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-400 focus:ring-opacity-50 transition-all duration-300"
               style={{
                 backgroundColor: 'rgba(15, 23, 42, 0.8)',
                 color: 'white',
@@ -333,11 +337,11 @@ function Results({ results: propResults }) {
 
           {/* Server Filter */}
           <div>
-            <label className="block text-white text-opacity-80 text-sm mb-2">Server</label>
+            <label className="block text-white text-opacity-80 text-sm mb-3 font-medium">Server</label>
             <select
               value={filterServer}
               onChange={(e) => setFilterServer(e.target.value)}
-              className="w-full bg-secondary-900 bg-opacity-60 border border-primary-400 border-opacity-30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-400 focus:ring-opacity-50 transition-all duration-300"
+              className="w-full bg-secondary-900 bg-opacity-60 border border-primary-400 border-opacity-30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-400 focus:ring-opacity-50 transition-all duration-300"
               style={{
                 backgroundColor: 'rgba(15, 23, 42, 0.8)',
                 color: 'white',
@@ -363,11 +367,11 @@ function Results({ results: propResults }) {
 
           {/* Date Range Filter */}
           <div>
-            <label className="block text-white text-opacity-80 text-sm mb-2">Date Range</label>
+            <label className="block text-white text-opacity-80 text-sm mb-3 font-medium">Date Range</label>
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="w-full bg-secondary-900 bg-opacity-60 border border-primary-400 border-opacity-30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-400 focus:ring-opacity-50 transition-all duration-300"
+              className="w-full bg-secondary-900 bg-opacity-60 border border-primary-400 border-opacity-30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-400 focus:ring-opacity-50 transition-all duration-300"
               style={{
                 backgroundColor: 'rgba(15, 23, 42, 0.8)',
                 color: 'white',
@@ -386,16 +390,16 @@ function Results({ results: propResults }) {
           </div>
         </div>
 
-        <div className="mt-4 flex gap-2">
+        <div className="mt-6 flex gap-3">
           <button
             onClick={() => setShowCharts(!showCharts)}
-            className="px-4 py-2 rounded-lg bg-primary-500 bg-opacity-30 hover:bg-opacity-50 text-white text-sm font-medium transition-all duration-300"
+            className="px-6 py-3 rounded-lg bg-primary-500 bg-opacity-30 hover:bg-opacity-50 text-white text-sm font-semibold transition-all duration-300 hover:scale-105"
           >
             {showCharts ? '📉 Hide Charts' : '📈 Show Charts'}
           </button>
           <button
             onClick={() => setShowAnalytics(!showAnalytics)}
-            className="px-4 py-2 rounded-lg bg-primary-500 bg-opacity-30 hover:bg-opacity-50 text-white text-sm font-medium transition-all duration-300"
+            className="px-6 py-3 rounded-lg bg-primary-500 bg-opacity-30 hover:bg-opacity-50 text-white text-sm font-semibold transition-all duration-300 hover:scale-105"
           >
             {showAnalytics ? '📊 Hide Analytics' : '📊 Show Analytics'}
           </button>
@@ -404,45 +408,45 @@ function Results({ results: propResults }) {
 
       {/* Analytics Dashboard */}
       {showAnalytics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="glass-card p-6 text-center">
-            <div className="text-3xl font-bold text-white mb-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="glass-card p-8 text-center transform hover:scale-105 transition-transform duration-300">
+            <div className="text-4xl font-bold text-white mb-3">
               {analytics.totalTests}
             </div>
-            <div className="text-white text-opacity-80 text-sm">Total Tests</div>
+            <div className="text-white text-opacity-80 text-base font-medium">Total Tests</div>
           </div>
           
-          <div className="glass-card p-6 text-center">
-            <div className="text-3xl font-bold text-white mb-2">
+          <div className="glass-card p-8 text-center transform hover:scale-105 transition-transform duration-300">
+            <div className="text-4xl font-bold text-white mb-3">
               {analytics.avgDownload > 0 ? analytics.avgDownload.toFixed(1) : '--'}
             </div>
-            <div className="text-white text-opacity-80 text-sm">Avg Download (Mbps)</div>
+            <div className="text-white text-opacity-80 text-base font-medium">Avg Download (Mbps)</div>
             {analytics.bestDownload && (
-              <div className="text-xs text-green-400 mt-1">
+              <div className="text-sm text-green-400 mt-2 font-medium">
                 Best: {analytics.bestDownload.toFixed(1)} Mbps
               </div>
             )}
           </div>
           
-          <div className="glass-card p-6 text-center">
-            <div className="text-3xl font-bold text-white mb-2">
+          <div className="glass-card p-8 text-center transform hover:scale-105 transition-transform duration-300">
+            <div className="text-4xl font-bold text-white mb-3">
               {analytics.avgUpload > 0 ? analytics.avgUpload.toFixed(1) : '--'}
             </div>
-            <div className="text-white text-opacity-80 text-sm">Avg Upload (Mbps)</div>
+            <div className="text-white text-opacity-80 text-base font-medium">Avg Upload (Mbps)</div>
             {analytics.bestUpload && (
-              <div className="text-xs text-green-400 mt-1">
+              <div className="text-sm text-green-400 mt-2 font-medium">
                 Best: {analytics.bestUpload.toFixed(1)} Mbps
               </div>
             )}
           </div>
           
-          <div className="glass-card p-6 text-center">
-            <div className="text-3xl font-bold text-white mb-2">
+          <div className="glass-card p-8 text-center transform hover:scale-105 transition-transform duration-300">
+            <div className="text-4xl font-bold text-white mb-3">
               {analytics.avgLatency > 0 ? Math.round(analytics.avgLatency) : '--'}
             </div>
-            <div className="text-white text-opacity-80 text-sm">Avg Latency (ms)</div>
+            <div className="text-white text-opacity-80 text-base font-medium">Avg Latency (ms)</div>
             {analytics.trend !== 'neutral' && (
-              <div className={`text-xs mt-1 ${analytics.trend === 'improving' ? 'text-green-400' : 'text-red-400'}`}>
+              <div className={`text-sm mt-2 font-medium ${analytics.trend === 'improving' ? 'text-green-400' : 'text-red-400'}`}>
                 {analytics.trend === 'improving' ? '📈 Improving' : '📉 Declining'}
               </div>
             )}
@@ -452,9 +456,11 @@ function Results({ results: propResults }) {
 
       {/* Historical Charts */}
       {showCharts && chartData.length > 0 && (
-        <div className="glass-card p-6">
-          <h3 className="text-xl font-semibold text-white mb-4">📈 Speed Trends Over Time</h3>
-          <div className="h-64">
+        <div className="glass-card p-8">
+          <h3 className="text-2xl font-semibold text-white mb-6 flex items-center gap-3">
+            <span className="text-xl">📈</span> Speed Trends Over Time
+          </h3>
+          <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
@@ -517,31 +523,31 @@ function Results({ results: propResults }) {
       )}
 
       {/* Results List */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-xl font-semibold text-white">
+          <h3 className="text-2xl font-semibold text-white">
             Test History ({filteredResults.length} {filteredResults.length === 1 ? 'result' : 'results'})
           </h3>
         </div>
         
         {filteredResults.length === 0 ? (
-          <div className="glass-card p-6 text-center">
-            <p className="text-white text-opacity-80">No results match your current filters.</p>
+          <div className="glass-card p-8 text-center">
+            <p className="text-white text-opacity-80 text-lg">No results match your current filters.</p>
           </div>
         ) : (
           filteredResults.map((result) => (
-            <div key={result.id} className="glass-card p-4 hover:bg-opacity-20 transition-all duration-300">
+            <div key={result.id} className="glass-card p-6 hover:bg-opacity-20 transition-all duration-300 transform hover:scale-[1.01]">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="text-2xl">
+                <div className="flex items-center gap-6">
+                  <div className="text-4xl">
                     {result.type === 'download' ? '📥' : '📤'}
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-white font-medium capitalize">
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="text-white font-semibold capitalize text-lg">
                         {result.type}
                       </span>
-                      <span className={`text-xl font-bold ${getSpeedColor(result.speed, result.type)}`}>
+                      <span className={`text-2xl font-bold ${getSpeedColor(result.speed, result.type)}`}>
                         {result.speed} Mbps
                       </span>
                     </div>
@@ -551,13 +557,13 @@ function Results({ results: propResults }) {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-6">
                   <div className="text-right">
-                    <div className="text-white text-opacity-80 text-sm">
+                    <div className="text-white text-opacity-80 text-base font-medium">
                       Server: {result.server?.region || result.server?.name || 'Unknown'}
                     </div>
                     {result.metrics && (
-                      <div className="text-white text-opacity-60 text-xs">
+                      <div className="text-white text-opacity-60 text-sm">
                         Latency: {result.metrics.latency}ms
                         {result.metrics.jitter && ` | Jitter: ${result.metrics.jitter}ms`}
                       </div>
@@ -565,7 +571,7 @@ function Results({ results: propResults }) {
                   </div>
                   <button
                     onClick={() => handleDeleteResult(result.id)}
-                    className="px-2 py-1 rounded text-red-400 hover:bg-red-500 hover:bg-opacity-20 text-xs transition-all duration-300"
+                    className="px-3 py-2 rounded-lg text-red-400 hover:bg-red-500 hover:bg-opacity-20 text-base transition-all duration-300 hover:scale-110"
                     title="Delete this result"
                   >
                     🗑️
@@ -574,11 +580,11 @@ function Results({ results: propResults }) {
               </div>
               
               {result.duration && (
-                <div className="mt-3 pt-3 border-t border-white border-opacity-20">
+                <div className="mt-4 pt-4 border-t border-white border-opacity-20">
                   <div className="flex justify-between text-sm text-white text-opacity-70">
-                    <span>Duration: {(result.duration / 1000).toFixed(1)}s</span>
+                    <span className="font-medium">Duration: {(result.duration / 1000).toFixed(1)}s</span>
                     {result.userInfo?.isp && (
-                      <span>ISP: {result.userInfo.isp}</span>
+                      <span className="font-medium">ISP: {result.userInfo.isp}</span>
                     )}
                   </div>
                 </div>
@@ -589,23 +595,23 @@ function Results({ results: propResults }) {
       </div>
 
       {/* Export Options */}
-      <div className="glass-card p-6 text-center">
-        <h3 className="text-xl font-semibold text-white mb-4">Export Results</h3>
-        <div className="flex gap-3 justify-center">
+      <div className="glass-card p-8 text-center">
+        <h3 className="text-2xl font-semibold text-white mb-6">Export Results</h3>
+        <div className="flex gap-4 justify-center">
           <button 
             onClick={handleExportJSON}
-            className="gradient-button px-4 py-2 rounded-lg text-white font-medium transition-all duration-300 hover:shadow-lg"
+            className="gradient-button px-8 py-4 rounded-xl text-white font-semibold text-base transition-all duration-300 hover:shadow-xl hover:scale-105"
           >
             📄 Export JSON
           </button>
           <button 
             onClick={handleExportCSV}
-            className="gradient-button px-4 py-2 rounded-lg text-white font-medium transition-all duration-300 hover:shadow-lg"
+            className="gradient-button px-8 py-4 rounded-xl text-white font-semibold text-base transition-all duration-300 hover:shadow-xl hover:scale-105"
           >
             📊 Export CSV
           </button>
         </div>
-        <p className="text-white text-opacity-60 text-sm mt-4">
+        <p className="text-white text-opacity-60 text-base mt-5">
           Export includes all {storageStats.totalTests} stored test results
         </p>
       </div>

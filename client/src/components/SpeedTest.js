@@ -36,11 +36,7 @@ function SpeedTest({ selectedServer, onTestComplete }) {
 	useEffect(() => {
 		if (selectedServer && selectedServer.url) {
 			// Initialize socket connection for real-time testing
-			const serverUrl = selectedServer.url === 'http://localhost:3001'
-				? 'http://localhost:3001'
-				: selectedServer.url;
-
-			socketRef.current = io(serverUrl);
+			socketRef.current = io(selectedServer.url);
 
 			socketRef.current.on('connect', () => {
 				// WebSocket connected
@@ -119,53 +115,105 @@ function SpeedTest({ selectedServer, onTestComplete }) {
 		setProgress(0);
 		setCurrentSpeed(0);
 		testStartTime.current = Date.now();
-
-		// Add initial data point at time 0
 		setDownloadGraphData([{ time: 0, speed: 0 }]);
 
 		try {
-			if (selectedServer.url === 'http://localhost:3001') {
-				// Use WebSocket for local testing
-				const testId = Date.now().toString();
-				socketRef.current.emit('start-download-test', { sizeMB: 10, testId });
-			} else {
-				// Use HTTP for production servers
-				const response = await axios.get(`${selectedServer.url}/download/10`, {
-					responseType: 'blob',
-					onDownloadProgress: (progressEvent) => {
-						const { loaded, total } = progressEvent;
-						const realElapsed = (Date.now() - testStartTime.current) / 1000;
-						// Use realistic elapsed time for download (downloads typically take longer)
-						const elapsed = Math.max(realElapsed, 0.5); // Minimum 0.5s for downloads
-						const speedMbps = (loaded * 8) / (elapsed * 1000000); // Consistent calculation
-
-						setCurrentSpeed(Math.min(speedMbps, 1000)); // Cap at 1Gbps
-						setProgress((loaded / total) * 100);
-
-						// Update graph data for HTTP download
-						setDownloadGraphData(prev => {
-							const newPoint = {
-								time: parseFloat(elapsed.toFixed(1)), // Ensure it's a number for proper scaling
-								speed: Math.min(speedMbps, 1000)
-							};
-							// Keep all data points for complete test visualization
-							return [...prev, newPoint];
-						});
-					}
-				});
-
-				const totalTime = Math.max((Date.now() - testStartTime.current) / 1000, 0.001);
-				const avgSpeed = (response.data.size * 8) / (totalTime * 1000000); // Correct calculation
-
-				handleTestComplete({
-					totalBytes: response.data.size,
-					duration: totalTime * 1000,
-					avgSpeed: Math.min(avgSpeed.toFixed(2), 1000)
-				}, 'download');
-			}
+			// Multi-phase adaptive download test
+			await runAdaptiveDownloadTest();
 		} catch (error) {
 			console.error('Download test failed:', error);
 		}
+	};
+
+	const runAdaptiveDownloadTest = async () => {
+		const phases = [
+			{ size: 1, duration: 2000, name: 'warmup' },     // 1MB warmup
+			{ size: 5, duration: 3000, name: 'ramp' },       // 5MB ramp-up  
+			{ size: 25, duration: 8000, name: 'sustained' }, // 25MB sustained
+			{ size: 50, duration: 15000, name: 'peak' }      // 50MB peak test
+		];
+
+		let totalBytes = 0;
+		let totalDuration = 0;
+		let peakSpeed = 0;
+		let sustainedSpeed = 0;
+		const speedSamples = [];
+
+		for (let i = 0; i < phases.length; i++) {
+			const phase = phases[i];
+			console.log(`Starting ${phase.name} phase: ${phase.size}MB`);
+			
+			const phaseStart = Date.now();
+			
+			try {
+				const response = await axios.get(`${selectedServer.url}/download/${phase.size}`, {
+					responseType: 'blob',
+					timeout: phase.duration,
+					onDownloadProgress: (progressEvent) => {
+						const { loaded } = progressEvent;
+						const elapsed = (Date.now() - testStartTime.current) / 1000;
+						const phaseElapsed = (Date.now() - phaseStart) / 1000;
+						
+						// Calculate instantaneous speed (smoothed over last 500ms)
+						const instantSpeed = (loaded * 8) / (phaseElapsed * 1000000);
+						const smoothedSpeed = Math.min(instantSpeed, 1000);
+						
+						setCurrentSpeed(smoothedSpeed);
+						peakSpeed = Math.max(peakSpeed, smoothedSpeed);
+						
+						if (phase.name === 'sustained' || phase.name === 'peak') {
+							speedSamples.push(smoothedSpeed);
+						}
+
+						// Update progress across all phases
+						const phaseWeight = [0.1, 0.2, 0.4, 0.3][i]; // Different weights per phase
+						const baseProgress = phases.slice(0, i).reduce((sum, p, idx) => sum + [0.1, 0.2, 0.4, 0.3][idx] * 100, 0);
+						const phaseProgress = (loaded / (phase.size * 1024 * 1024)) * phaseWeight * 100;
+						setProgress(baseProgress + phaseProgress);
+
+						// Add to graph data
+						setDownloadGraphData(prev => [
+							...prev,
+							{
+								time: parseFloat(elapsed.toFixed(1)),
+								speed: smoothedSpeed,
+								phase: phase.name
+							}
+						]);
+					}
+				});
+
+				const phaseDuration = Date.now() - phaseStart;
+				totalBytes += response.data.size;
+				totalDuration += phaseDuration;
+
+				// Short pause between phases to stabilize
+				if (i < phases.length - 1) {
+					await new Promise(resolve => setTimeout(resolve, 200));
+				}
+
+			} catch (error) {
+				if (error.code === 'ECONNABORTED') {
+					console.log(`Phase ${phase.name} timed out, continuing...`);
+					break; // Stop if network can't handle this phase
+				}
+				throw error;
+			}
+		}
+
+		// Calculate final results
+		const trimCount = Math.max(1, Math.floor(speedSamples.length * 0.6));
+		sustainedSpeed = speedSamples.length > 0 
+			? speedSamples.slice(-trimCount).reduce((a, b) => a + b, 0) / trimCount
+			: peakSpeed;
+
+		handleTestComplete({
+			totalBytes,
+			duration: totalDuration,
+			avgSpeed: sustainedSpeed.toFixed(2),
+			peakSpeed: peakSpeed.toFixed(2),
+			testType: 'adaptive-download'
+		}, 'download');
 	};
 
 	const startUploadTest = async () => {
@@ -366,7 +414,7 @@ function SpeedTest({ selectedServer, onTestComplete }) {
 			setProgress(0);
 			setCurrentSpeed(0);
 
-			if (selectedServer.url === 'http://localhost:3001') {
+			if (selectedServer.id === 'local') {
 				// For WebSocket tests, we need to wait for completion
 				await startDownloadTest();
 				await waitForTestCompletion('download');
@@ -438,15 +486,18 @@ function SpeedTest({ selectedServer, onTestComplete }) {
 	}, [fetchUserInfo]);
 
 	return (
-		<div className="p-5">
+		<div className="space-y-8">
 			{/* Header with Controls */}
-			<div className="flex justify-between items-center mb-8">
-				<div className="flex items-center gap-3">
-					<span className="text-3xl">🚀</span>
-				</div>
+			<div className="flex justify-between items-center">
+				<h2 className="text-3xl font-bold text-white flex items-center gap-3">
+					<div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full flex items-center justify-center cyber-glow">
+						<span className="text-2xl">⚡</span>
+					</div>
+					Speed Test
+				</h2>
 				
 				{/* Top Right Controls */}
-				<div className="flex items-center gap-4">
+				<div className="flex items-center gap-5">
 					{/* Speed Unit Toggle */}
 					<div className="bg-secondary-900 bg-opacity-40 rounded-full p-1 border border-primary-400 border-opacity-30">
 						<button
@@ -484,32 +535,33 @@ function SpeedTest({ selectedServer, onTestComplete }) {
 			</div>
 
 			{/* Metrics Grid */}
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-				<div className="metric-card">
-					<div className="text-xs text-white text-opacity-80 mb-1">Latency</div>
-					<div className="text-lg font-bold text-white">{metrics.latency} ms</div>
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+				<div className="metric-card p-6">
+					<div className="text-sm text-white text-opacity-70 mb-2 font-medium">Latency</div>
+					<div className="text-3xl font-bold text-white">{metrics.latency} <span className="text-lg text-opacity-70">ms</span></div>
 				</div>
-				<div className="metric-card">
-					<div className="text-xs text-white text-opacity-80 mb-1">Jitter</div>
-					<div className="text-lg font-bold text-white">{metrics.jitter} ms</div>
+				<div className="metric-card p-6">
+					<div className="text-sm text-white text-opacity-70 mb-2 font-medium">Jitter</div>
+					<div className="text-3xl font-bold text-white">{metrics.jitter} <span className="text-lg text-opacity-70">ms</span></div>
 				</div>
-				<div className="metric-card">
-					<div className="text-xs text-white text-opacity-80 mb-1">Server</div>
-					<div className="text-lg font-bold text-white">{selectedServer?.region || 'None'}</div>
+				<div className="metric-card p-6">
+					<div className="text-sm text-white text-opacity-70 mb-2 font-medium">Server</div>
+					<div className="text-xl font-bold text-white truncate">{selectedServer?.region || 'None'}</div>
 				</div>
 			</div>
 
 			{/* Speed Graphs */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 				{/* Download Graph */}
-				<div className="glass-card p-4">
-					<h4 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
-						<span>📥</span> Download
+				<div className="glass-card p-6">
+					<h4 className="text-base font-semibold text-white mb-4 flex items-center gap-3">
+						<span className="text-xl">📥</span> 
+						<span>Download Speed</span>
 						{currentTestType === 'download' && isTestRunning && (
-							<div className="w-3 h-3 bg-primary-500 rounded-full animate-pulse ml-auto"></div>
+							<div className="w-2.5 h-2.5 bg-primary-500 rounded-full animate-pulse ml-auto"></div>
 						)}
 					</h4>
-					<div className="h-48">
+					<div className="h-56">
 						<ResponsiveContainer width="100%" height="100%">
 							<AreaChart data={downloadGraphData}>
 								<defs>
@@ -565,14 +617,15 @@ function SpeedTest({ selectedServer, onTestComplete }) {
 				</div>
 
 				{/* Upload Graph */}
-				<div className="glass-card p-4">
-					<h4 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
-						<span>📤</span> Upload
+				<div className="glass-card p-6">
+					<h4 className="text-base font-semibold text-white mb-4 flex items-center gap-3">
+						<span className="text-xl">📤</span>
+						<span>Upload Speed</span>
 						{currentTestType === 'upload' && isTestRunning && (
-							<div className="w-3 h-3 bg-accent-500 rounded-full animate-pulse ml-auto"></div>
+							<div className="w-2.5 h-2.5 bg-accent-500 rounded-full animate-pulse ml-auto"></div>
 						)}
 					</h4>
-					<div className="h-48">
+					<div className="h-56">
 						<ResponsiveContainer width="100%" height="100%">
 							<AreaChart data={uploadGraphData}>
 								<defs>
@@ -630,44 +683,48 @@ function SpeedTest({ selectedServer, onTestComplete }) {
 
 			{/* Current Speed Display (only during testing) */}
 			{isTestRunning && (
-				<div className={`text-center mb-6`}>
+				<div className={`text-center py-8`}>
 					<div className={`speed-display animate-speed-pulse`}>
 						{convertSpeed(currentSpeed)}
-						<span className="text-2xl opacity-80 ml-3">{getSpeedUnit()}</span>
+						<span className="text-3xl opacity-80 ml-4">{getSpeedUnit()}</span>
 					</div>
-					<div className="text-sm mt-2 text-white text-opacity-70">
-						{currentTestType === 'download' ? '📥 Download' : '📤 Upload'}
+					<div className="text-base mt-4 text-white text-opacity-70 font-medium">
+						{currentTestType === 'download' ? '📥 Downloading' : '📤 Uploading'}
 					</div>
 				</div>
 			)}
 
 			{/* Results Display (persistent until next test) */}
 			{!isTestRunning && (testResults.download || testResults.upload) && (
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 					{/* Download Result */}
-					<div className="glass-card p-4 text-center">
-						<div className="text-sm text-white text-opacity-80 mb-2">📥 Download</div>
-						<div className="text-3xl font-bold text-white mb-1">
+					<div className="glass-card p-8 text-center transform hover:scale-105 transition-transform duration-300">
+						<div className="text-base text-white text-opacity-80 mb-3 font-medium flex items-center justify-center gap-2">
+							<span className="text-xl">📥</span> Download
+						</div>
+						<div className="text-5xl font-bold text-white mb-2">
 							{testResults.download ? convertSpeed(parseFloat(testResults.download.speed)) : '--'}
-							<span className="text-lg opacity-80 ml-2">{getSpeedUnit()}</span>
+							<span className="text-2xl opacity-80 ml-3">{getSpeedUnit()}</span>
 						</div>
 						{testResults.download && (
-							<div className="text-xs text-white text-opacity-60">
-								{(testResults.download.duration / 1000).toFixed(1)}s
+							<div className="text-sm text-white text-opacity-60 mt-3">
+								Completed in {(testResults.download.duration / 1000).toFixed(1)}s
 							</div>
 						)}
 					</div>
 					
 					{/* Upload Result */}
-					<div className="glass-card p-4 text-center">
-						<div className="text-sm text-white text-opacity-80 mb-2">📤 Upload</div>
-						<div className="text-3xl font-bold text-white mb-1">
+					<div className="glass-card p-8 text-center transform hover:scale-105 transition-transform duration-300">
+						<div className="text-base text-white text-opacity-80 mb-3 font-medium flex items-center justify-center gap-2">
+							<span className="text-xl">📤</span> Upload
+						</div>
+						<div className="text-5xl font-bold text-white mb-2">
 							{testResults.upload ? convertSpeed(parseFloat(testResults.upload.speed)) : '--'}
-							<span className="text-lg opacity-80 ml-2">{getSpeedUnit()}</span>
+							<span className="text-2xl opacity-80 ml-3">{getSpeedUnit()}</span>
 						</div>
 						{testResults.upload && (
-							<div className="text-xs text-white text-opacity-60">
-								{(testResults.upload.duration / 1000).toFixed(1)}s
+							<div className="text-sm text-white text-opacity-60 mt-3">
+								Completed in {(testResults.upload.duration / 1000).toFixed(1)}s
 							</div>
 						)}
 					</div>
@@ -676,7 +733,7 @@ function SpeedTest({ selectedServer, onTestComplete }) {
 
 			{/* Progress Bar (only during testing) */}
 			{isTestRunning && (
-				<div className="w-full h-2 bg-secondary-900 bg-opacity-50 rounded-full mb-6 overflow-hidden neon-border">
+				<div className="w-full h-3 bg-secondary-900 bg-opacity-50 rounded-full overflow-hidden neon-border mb-8">
 					<div
 						className="h-full bg-gradient-to-r from-primary-500 to-accent-500 transition-all duration-300 ease-out cyber-glow"
 						style={{ width: `${progress}%` }}
@@ -685,53 +742,53 @@ function SpeedTest({ selectedServer, onTestComplete }) {
 			)}
 
 			{/* Start Test Button */}
-			<div className="text-center mb-6">
+			<div className="text-center mb-8">
 				<button
 					onClick={runCompleteSpeedTest}
 					disabled={isTestRunning || !selectedServer}
-					className={`px-8 py-3 rounded-full text-lg font-bold transition-all duration-300 shadow-lg ${isTestRunning || !selectedServer
-						? 'bg-gray-600 cursor-not-allowed text-gray-300'
-						: 'gradient-button text-white hover:shadow-xl hover:-translate-y-1 active:translate-y-0'
+					className={`px-12 py-4 rounded-xl text-xl font-bold transition-all duration-300 shadow-lg ${isTestRunning || !selectedServer
+						? 'bg-gray-600 cursor-not-allowed text-gray-400 opacity-50'
+						: 'gradient-button text-white hover:shadow-2xl hover:-translate-y-1 hover:scale-105 active:translate-y-0 active:scale-100'
 						}`}
 				>
 					{isTestRunning ? (
-						<span className="flex items-center gap-2">
-							<div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+						<span className="flex items-center gap-3">
+							<div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
 							Testing {currentTestType}...
 						</span>
 					) : (
-						`Start Test`
+						`Start Speed Test`
 					)}
 				</button>
 			</div>
 
 			{/* Connection Info */}
 			{userInfo.ip && (
-				<div className="glass-card p-4">
-					<h4 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
-						<span>🌐</span> Connection Info
+				<div className="glass-card p-6">
+					<h4 className="text-base font-semibold text-white mb-5 flex items-center gap-3">
+						<span className="text-xl">🌐</span> Connection Info
 					</h4>
-					<div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+					<div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
 						{userInfo.isp && (
 							<div>
-								<div className="text-neutral-400 mb-1">ISP</div>
-								<div className="text-white font-medium truncate">{userInfo.isp}</div>
+								<div className="text-neutral-400 mb-2 font-medium">ISP</div>
+								<div className="text-white font-semibold truncate">{userInfo.isp}</div>
 							</div>
 						)}
 						{userInfo.location && (
 							<div>
-								<div className="text-neutral-400 mb-1">Location</div>
-								<div className="text-white font-medium truncate">{userInfo.location}</div>
+								<div className="text-neutral-400 mb-2 font-medium">Location</div>
+								<div className="text-white font-semibold truncate">{userInfo.location}</div>
 							</div>
 						)}
 						<div>
-							<div className="text-neutral-400 mb-1">IP Address</div>
-							<div className="text-white font-medium">{userInfo.ip}</div>
+							<div className="text-neutral-400 mb-2 font-medium">IP Address</div>
+							<div className="text-white font-semibold">{userInfo.ip}</div>
 						</div>
 						{userInfo.country && (
 							<div>
-								<div className="text-neutral-400 mb-1">Country</div>
-								<div className="text-white font-medium">{userInfo.country}</div>
+								<div className="text-neutral-400 mb-2 font-medium">Country</div>
+								<div className="text-white font-semibold">{userInfo.country}</div>
 							</div>
 						)}
 					</div>

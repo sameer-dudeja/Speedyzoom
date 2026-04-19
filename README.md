@@ -220,31 +220,70 @@ const comprehensiveTest = {
 
 ## 🚦 Getting Started
 
+### Local Development
+
 ```bash
 # Install dependencies
 npm install
 
-# Install all project dependencies
+# Install all project dependencies (both client and server)
 npm run install:all
 
-# Start development servers
+# Start development servers (both frontend and backend)
 npm run dev
 
 # Access the application
-# Frontend: http://localhost:3000
-# Backend API: http://localhost:3001
+# Frontend: http://localhost:3001 (React dev server)
+# Backend API: http://localhost:3002 (Express + Socket.io)
 ```
+
+### Testing Against AWS Infrastructure
+
+```bash
+# 1. Configure client to use deployed EC2 server
+cd client
+echo "PORT=3001" > .env.development
+echo "REACT_APP_API_URL=http://your-ec2-dns:3002" >> .env.development
+
+# 2. Start only the React client
+npm run dev
+
+# The app will now test against the real AWS infrastructure
+```
+
+### AWS Deployment
+
+See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for comprehensive deployment instructions including:
+- AWS infrastructure setup with Terraform
+- EC2 instance configuration
+- Node.js 20 installation
+- Server deployment and systemd service setup
+- Multi-region deployment
+- Security and performance optimization
 
 ## 🎯 Key Features
 
-- ✅ **Multi-Protocol Testing** - HTTP, WebSocket, parallel connections
-- ✅ **Anti-Detection Technology** - Random data, variable patterns
-- ✅ **Real-time Analytics** - Live speed tracking and visualization  
-- ✅ **Geographic Testing** - Multiple global regions
-- ✅ **ISP Optimization Detection** - Compare with popular speed tests
-- ✅ **Mobile Responsive** - Works on all devices
-- ✅ **Historical Tracking** - Speed trends over time
-- ✅ **Export Results** - JSON, CSV data export
+### Implemented ✅
+- ✅ **Multi-Protocol Testing** - HTTP and WebSocket testing
+- ✅ **Anti-Detection Technology** - Cryptographic random data generation
+- ✅ **Real-time Analytics** - Live speed tracking with Recharts visualization
+- ✅ **ISP Detection** - Automatic IP geolocation and ISP identification
+- ✅ **Modern UI** - Cyberpunk neon theme with glass-morphism effects
+- ✅ **Sequential Testing** - Latency → Download → Upload with real-time graphs
+- ✅ **AWS Multi-Region Ready** - Terraform infrastructure for 4 AWS regions
+- ✅ **Production Deployment** - Successfully deployed and tested on AWS EC2
+- ✅ **Enhanced Server** - Adaptive chunk sizing, high-res timing, trimmed averaging
+
+### In Progress 🚧
+- 🚧 **Multi-Region Deployment** - Infrastructure ready, deploying to additional regions
+- 🚧 **Server Selection** - Geographic proximity and latency-based selection
+
+### Planned 📋
+- 📋 **Historical Tracking** - Speed trends over time
+- 📋 **Parallel Connections** - Multi-stream testing for accurate measurements
+- 📋 **ISP Optimization Detection** - Compare with popular speed tests
+- 📋 **Export Results** - JSON, CSV data export
+- 📋 **Mobile Optimization** - Enhanced responsive design
 
 ## 🔬 Scientific Approach
 
@@ -295,6 +334,37 @@ Popular Speed Test: 300 Mbps | SpeedyZoom: 180 Mbps | Difference: 40%
 Popular Speed Test: 400 Mbps | SpeedyZoom: 120 Mbps | Difference: 70%
 ```
 
+## 📚 Documentation
+
+- **[README.md](./README.md)** - Project overview, features, quick start (you are here)
+- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Internal development guide, implementation phases, technical decisions
+- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Comprehensive AWS deployment, server configuration, troubleshooting
+
+## 🏗️ Project Status
+
+### Phase 1: Core Speed Test ✅ Complete
+- Multi-protocol testing (HTTP + WebSocket)
+- Real-time speed calculation and visualization
+- Modern UI with cyberpunk theme
+- ISP detection and connection info
+
+### Phase 2: Infrastructure & Deployment ✅ Complete
+- Terraform multi-region infrastructure
+- Enhanced server with adaptive testing
+- Production deployment on AWS EC2
+- Comprehensive documentation
+
+### Phase 3: Multi-Region Expansion 🚧 In Progress
+- Deploy to India, Europe, Asia Pacific regions
+- Automatic server selection
+- Enhanced testing features
+
+### Phase 4: Advanced Features 📋 Planned
+- Historical data tracking
+- ISP optimization detection
+- Machine learning pattern detection
+- Browser extension
+
 ## 📜 License
 
 MIT License - See LICENSE file for details
@@ -309,4 +379,10 @@ Contributions are welcome! Please read our contributing guidelines and submit pu
 
 ---
 
-**Note**: For development setup, deployment instructions, and internal documentation, see `DEVELOPMENT.md` 
+## 🔗 Quick Links
+
+- [Getting Started](#-getting-started)
+- [Deployment Guide](./DEPLOYMENT_GUIDE.md)
+- [Development Documentation](./DEVELOPMENT.md)
+- [Technical Methodology](#-technical-methodology)
+- [Infrastructure Setup](./terraform/) 
